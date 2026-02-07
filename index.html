@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2026 Pomodoro Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { transition: background-color 0.5s ease; overflow: hidden; }
@@ -60,18 +61,32 @@
                 </div>
 
                 <button onclick="switchPage('stats')" class="mt-auto text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-rose-500 transition-colors">
-                    상세 통계 보기 ➔
+                    상세 통계 분석 ➔
                 </button>
             </div>
 
             <div id="page-stats" class="page flex flex-col">
-                <h2 class="text-xl font-black text-gray-800 mb-6 flex justify-between items-center">
-                    Daily Report
+                <h2 class="text-xl font-black text-gray-800 mb-4 flex justify-between items-center">
+                    2026 Analysis
                     <button onclick="switchPage('timer')" class="text-xs font-bold text-rose-500 uppercase p-2">✕ Close</button>
                 </h2>
-                <div id="stats-list" class="flex-1 overflow-y-auto space-y-3 pr-1"></div>
-                <div class="mt-6 p-4 bg-white/50 rounded-2xl border border-white/10">
-                    <div class="text-[10px] font-bold text-gray-400 uppercase mb-1">Total Focus Time</div>
+                
+                <div class="bg-white/50 rounded-2xl p-3 mb-4 border border-white/20 shadow-sm">
+                    <canvas id="monthlyChart" height="130"></canvas>
+                </div>
+
+                <div class="bg-white/50 rounded-2xl p-4 mb-4 border border-white/20 flex items-center gap-4 shadow-sm">
+                    <div class="w-1/2 flex justify-center"><canvas id="tagChart"></canvas></div>
+                    <div class="w-1/2">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase mb-2">Investment %</p>
+                        <div id="tag-legend" class="text-[11px] space-y-1 max-h-[100px] overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <div id="stats-list" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+
+                <div class="mt-4 p-4 bg-white/50 rounded-2xl border border-white/10">
+                    <div class="text-[10px] font-bold text-gray-400 uppercase mb-1">Total Focus</div>
                     <div class="text-2xl font-black text-rose-600"><span id="total-time">0</span> min</div>
                 </div>
             </div>
