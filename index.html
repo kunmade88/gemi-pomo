@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Pomodoro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { transition: background-color 0.5s ease; }
+    </style>
+</head>
+<body class="bg-rose-50 min-h-screen flex items-center justify-center font-sans" id="body-bg">
+    <div class="text-center">
+        <div class="mb-8 flex justify-center gap-4">
+            <span id="mode-text" class="px-6 py-2 bg-white rounded-full shadow-sm text-rose-600 font-bold">Focus</span>
+        </div>
+
+        <div id="timer" class="text-[10rem] font-black text-gray-800 leading-none mb-12 tracking-tighter">
+            25:00
+        </div>
+
+        <div class="flex justify-center gap-6">
+            <button id="start-btn" class="w-20 h-20 bg-gray-800 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-transform">
+                ▶
+            </button>
+            <button id="reset-btn" class="w-20 h-20 bg-white text-gray-400 rounded-full flex items-center justify-center shadow-md hover:text-gray-600 transition-all">
+                ↺
+            </button>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
