@@ -1,4 +1,3 @@
-// 1. 요소 선택
 const focusInput = document.getElementById('focus-input');
 const breakInput = document.getElementById('break-input');
 const timerDisplay = document.getElementById('timer');
@@ -12,28 +11,14 @@ const statsList = document.getElementById('stats-list');
 const yearBar = document.getElementById('year-bar');
 const yearPercentText = document.getElementById('year-percent');
 
-// 2. 초기 설정 및 데이터
 const alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+
 let timeLeft = focusInput.value * 60;
 let timerId = null;
 let isFocusMode = true;
 let stats = JSON.parse(localStorage.getItem('pomoStats_2026')) || { totalMinutes: 0, tagData: {} };
 
-// 3. UI 업데이트 함수
-function updateDisplay() {
-    const m = Math.floor(timeLeft / 60);
-    const s = timeLeft % 60;
-    timerDisplay.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    
-    // 휴식 모드일 때만 건너뛰기 버튼 표시
-    if (!isFocusMode) {
-        skipBtn.classList.remove('hidden');
-    } else {
-        skipBtn.classList.add('hidden');
-    }
-}
-
-// 전역 스코프에 switchPage 함수 배치 (HTML에서 접근 가능하도록)
+// 페이지 전환 함수
 window.switchPage = function(to) {
     const pTimer = document.getElementById('page-timer');
     const pStats = document.getElementById('page-stats');
@@ -45,8 +30,9 @@ window.switchPage = function(to) {
         pTimer.style.transform = 'translateX(0)';
         pStats.style.transform = 'translateX(100%)';
     }
-};
+}
 
+// 통계 렌더링 함수
 function renderStats() {
     statsList.innerHTML = '';
     const tags = Object.keys(stats.tagData);
@@ -64,10 +50,23 @@ function renderStats() {
     totalTimeDisplay.innerText = stats.totalMinutes;
 }
 
-// 4. 핵심 로직: 모드 전환 및 데이터 저장
+// 화면 업데이트 함수
+function updateDisplay() {
+    const m = Math.floor(timeLeft / 60);
+    const s = timeLeft % 60;
+    timerDisplay.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    
+    // 휴식 모드일 때만 건너뛰기 버튼 표시
+    if (!isFocusMode) {
+        skipBtn.classList.remove('hidden');
+    } else {
+        skipBtn.classList.add('hidden');
+    }
+}
+
+// 모드 전환 및 데이터 저장 로직 통합
 function toggleMode() {
     if (isFocusMode) {
-        // 집중 모드 완료 시 데이터 저장
         const tag = taskTag.value.trim() || "기본";
         const sessionMins = parseInt(focusInput.value) || 25;
         stats.totalMinutes += sessionMins;
@@ -75,9 +74,8 @@ function toggleMode() {
         stats.tagData[tag].minutes += sessionMins;
         stats.tagData[tag].sessions += 1;
         localStorage.setItem('pomoStats_2026', JSON.stringify(stats));
-        
-        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
         alarmSound.play().catch(() => {});
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
     }
 
     isFocusMode = !isFocusMode;
@@ -86,7 +84,7 @@ function toggleMode() {
     updateDisplay();
 }
 
-// 5. 이벤트 리스너
+// 시작/일시정지 버튼
 startBtn.addEventListener('click', () => {
     if (timerId) {
         clearInterval(timerId);
@@ -101,22 +99,61 @@ startBtn.addEventListener('click', () => {
                 clearInterval(timerId);
                 timerId = null;
                 startBtn.innerText = '▶';
-                const message = isFocusMode ? "완료! 고생하셨어요. 휴식 시작!" : "휴식 끝! 다시 집중해요.";
+                const msg = isFocusMode ? "집중 끝! 휴식 시작." : "휴식 끝! 다시 집중해요.";
                 toggleMode();
-                setTimeout(() => alert(message), 100);
+                setTimeout(() => alert(msg), 100);
             }
         }, 1000);
     }
 });
 
+// 초기화 버튼
 resetBtn.addEventListener('click', () => {
-    if (confirm("타이머를 초기화할까요?")) {
+    if(confirm("초기화할까요?")) {
         clearInterval(timerId);
         timerId = null;
-        timeLeft = (isFocusMode ? focusInput.value : breakInput.value) * 60;
+        isFocusMode = true;
+        timeLeft = focusInput.value * 60;
+        bodyBg.style.backgroundColor = '#fff1f2';
         startBtn.innerText = '▶';
         updateDisplay();
     }
 });
 
-skipBtn.addEventListener('click', ()
+// 건너뛰기 버튼
+skipBtn.addEventListener('click', () => {
+    if (confirm("휴식을 건너뛰고 바로 집중 모드로 갈까요?")) {
+        clearInterval(timerId);
+        timerId = null;
+        isFocusMode = true;
+        timeLeft = focusInput.value * 60;
+        bodyBg.style.backgroundColor = '#fff1f2';
+        startBtn.innerText = '▶';
+        updateDisplay();
+    }
+});
+
+// 설정값 변경 시 즉시 반영
+[focusInput, breakInput].forEach(input => {
+    input.addEventListener('change', () => {
+        if (!timerId) {
+            timeLeft = (isFocusMode ? focusInput.value : breakInput.value) * 60;
+            updateDisplay();
+        }
+    });
+});
+
+// 2026년 진행도 업데이트
+function updateYear() {
+    const now = new Date();
+    const start = new Date(2026, 0, 1);
+    const end = new Date(2027, 0, 1);
+    const progress = (now - start) / (end - start) * 100;
+    yearBar.style.width = progress + '%';
+    yearPercentText.innerText = progress.toFixed(4) + '%';
+}
+
+setInterval(updateYear, 1000);
+updateYear();
+updateDisplay();
+renderStats();
