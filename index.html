@@ -9,55 +9,41 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 1. 기본 배경 및 중앙 정렬 설정 */
+        /* 기본 설정 및 중앙 정렬 */
         html { height: -webkit-fill-available; }
-        
         body { 
             transition: background-color 0.5s ease; 
-            margin: 0;
-            padding: 0;
-            display: flex;
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh;
-            min-height: -webkit-fill-available;
-            user-select: none;
-            -webkit-app-region: drag;
-            overflow: hidden; 
+            margin: 0; padding: 0;
+            display: flex; align-items: center; justify-content: center; 
+            min-height: 100vh; min-height: -webkit-fill-available;
+            user-select: none; -webkit-app-region: drag; overflow: hidden; 
         }
 
-        /* 2. 위젯 컨테이너 (중앙 배치 및 가로모드 대응) */
+        /* 위젯 컨테이너 */
         .page-container { 
-            position: relative; 
-            width: 95%; 
-            max-width: 380px; 
-            height: 85vh; 
-            max-height: 650px; 
-            margin: auto;
-            overflow-y: auto; 
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 3.5rem;
-            backdrop-filter: blur(12px);
+            position: relative; width: 95%; max-width: 380px; 
+            height: 85vh; max-height: 650px; margin: auto;
+            overflow-y: auto; background: rgba(255, 255, 255, 0.4);
+            border-radius: 3.5rem; backdrop-filter: blur(12px);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
             -webkit-overflow-scrolling: touch;
         }
 
-        /* 3. 페이지 전환 및 내부 레이아웃 */
+        /* 페이지 전환 레이아웃 */
         .page { 
             position: absolute; inset: 0; width: 100%; height: auto; min-height: 100%;
             transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
+            padding: 2rem; display: flex; flex-direction: column;
         }
 
         #page-timer { transform: translateX(0); position: relative; }
         #page-stats { transform: translateX(100%); display: none; }
         
+        /* 통계 활성화 시 상태 */
         .stats-active #page-timer { transform: translateX(-100%); position: absolute; }
         .stats-active #page-stats { transform: translateX(0); display: flex; position: relative; }
 
-        /* 4. 가로 모드 (높이가 낮을 때) 최적화 */
+        /* 가로 모드 최적화 */
         @media (max-height: 500px) {
             body { padding: 10px 0; }
             .page-container { height: 92vh; border-radius: 2rem; }
@@ -66,11 +52,7 @@
             #task-tag { margin-bottom: 1rem; padding: 0.5rem; }
         }
 
-        /* 5. 기타 UI 디테일 */
-        button, input, canvas, #stats-list, .stat-item {
-            -webkit-app-region: no-drag !important;
-        }
-
+        button, input, canvas, #stats-list, .stat-item { -webkit-app-region: no-drag !important; }
         .page-container::-webkit-scrollbar { width: 0px; background: transparent; }
         input[type="number"]::-webkit-inner-spin-button { display: none; }
         .stat-item .delete-btn { opacity: 0; transition: opacity 0.2s; }
@@ -123,7 +105,7 @@
                     <button id="skip-btn" class="hidden w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all text-xl">⏭</button>
                 </div>
 
-                <button onclick="document.getElementById('main-container').classList.add('stats-active')" class="mt-auto text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-rose-500 transition-colors">
+                <button onclick="switchPage('stats')" class="mt-auto text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-rose-500 transition-colors">
                     상세 통계 분석 ➔
                 </button>
             </div>
@@ -131,7 +113,7 @@
             <div id="page-stats" class="page">
                 <h2 class="text-xl font-black text-gray-800 mb-4 flex justify-between items-center">
                     2026 Analysis
-                    <button onclick="document.getElementById('main-container').classList.remove('stats-active')" class="text-xs font-bold text-rose-500 uppercase p-2">✕ Close</button>
+                    <button onclick="switchPage('timer')" class="text-xs font-bold text-rose-500 uppercase p-2">✕ Close</button>
                 </h2>
                 
                 <div class="bg-white/50 rounded-2xl p-3 mb-4 border border-white/20 shadow-sm">
