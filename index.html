@@ -2,44 +2,82 @@
 <html lang="ko">
 <head>
     <link rel="apple-touch-icon" href="icon.png">
-<link rel="icon" href="icon.png">
+    <link rel="icon" href="icon.png">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2026 Pomodoro Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 위젯 스타일 최적화: 창 높이가 낮아지면 여백을 줄임 */
-@media (max-height: 500px) {
-    .page { padding: 1rem; }
-    #timer { font-size: 5rem; margin-bottom: 1rem; }
-    .page-container { height: 100vh; }
-    #task-tag { margin-bottom: 1rem; padding: 0.5rem; }
-}
-        /* 리스트 아이템에 마우스 올리면 삭제 버튼 보이게 하기 */
-.stat-item .delete-btn { opacity: 0; transition: opacity 0.2s; }
-.stat-item:hover .delete-btn { opacity: 1; }
-        body { transition: background-color 0.5s ease; overflow: hidden; }
-        .page-container { position: relative; width: 100%; height: 650px; overflow: hidden; }
+        /* 기본 설정 */
+        body { 
+            transition: background-color 0.5s ease; 
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            user-select: none;
+            -webkit-app-region: drag;
+            overflow: hidden; /* 전체 화면 스크롤 방지 */
+        }
+
+        /* 위젯 컨테이너: 가로모드 대응 핵심 */
+        .page-container { 
+            position: relative; 
+            width: 100%; 
+            max-width: 380px; 
+            height: 90vh; /* 화면 높이의 90% */
+            max-height: 650px; 
+            overflow-y: auto; /* 내부 스크롤 허용 */
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 3.5rem;
+            backdrop-filter: blur(12px);
+            -webkit-overflow-scrolling: touch; /* 모바일 부드러운 스크롤 */
+        }
+
         .page { 
-            position: absolute; inset: 0; width: 100%; height: 100%; 
+            position: absolute; inset: 0; width: 100%; height: auto; min-height: 100%;
             transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
             padding: 2rem;
+            display: flex;
+            flex-direction: column;
         }
-        #page-timer { transform: translateX(0); }
-        #page-stats { transform: translateX(100%); }
+
+        #page-timer { transform: translateX(0); position: relative; }
+        #page-stats { transform: translateX(100%); display: none; }
+        
+        /* 통계 페이지 활성화 시 스타일 */
+        .stats-active #page-timer { transform: translateX(-100%); position: absolute; }
+        .stats-active #page-stats { transform: translateX(0); display: flex; position: relative; }
+
+        /* 가로 모드 최적화 */
+        @media (max-height: 500px) {
+            .page-container { height: 95vh; border-radius: 1.5rem; }
+            #timer { font-size: 5rem !important; margin-bottom: 1rem; }
+            .page { padding: 1rem; }
+            #task-tag { margin-bottom: 1rem; padding: 0.5rem; }
+        }
+
+        /* 요소별 드래그 방지 */
+        button, input, canvas, #stats-list, .stat-item {
+            -webkit-app-region: no-drag !important;
+        }
+
+        /* 스크롤바 숨기기 (선택 사항) */
+        .page-container::-webkit-scrollbar { width: 0px; background: transparent; }
+        
         input[type="number"]::-webkit-inner-spin-button { display: none; }
-        /* 스크롤바 디자인 */
-        #stats-list::-webkit-scrollbar { width: 4px; }
-        #stats-list::-webkit-scrollbar-thumb { background: #fb7185; border-radius: 10px; }
+        .stat-item .delete-btn { opacity: 0; transition: opacity 0.2s; }
+        .stat-item:hover .delete-btn { opacity: 1; }
     </style>
 </head>
-<body class="bg-rose-50 min-h-screen flex items-center justify-center font-sans p-4" id="body-bg">
+<body class="bg-rose-50 font-sans p-4" id="body-bg">
     
-    <div class="relative w-full max-w-md bg-white/40 rounded-[3.5rem] backdrop-blur-md shadow-2xl overflow-hidden border border-white/20">
-        <div class="page-container">
+    <div class="relative w-full max-w-md bg-white/40 rounded-[3.5rem] backdrop-blur-md shadow-2xl border border-white/20 overflow-hidden">
+        <div class="page-container" id="main-container">
             
-            <div id="page-timer" class="page flex flex-col items-center">
+            <div id="page-timer" class="page items-center">
                 <div class="w-full mb-6 px-2">
                     <div class="flex justify-between text-[10px] font-bold text-gray-400 mb-2 uppercase">
                         <span>2026 Year Progress</span>
@@ -53,24 +91,24 @@
                 <input type="text" id="task-tag" placeholder="어떤 일을 하실 건가요?" 
                        class="w-full bg-white/60 border-none rounded-2xl py-3 px-4 text-center text-gray-700 focus:ring-2 focus:ring-rose-300 outline-none mb-6 shadow-sm">
 
-               <div class="mb-8 flex justify-center gap-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-    <div class="flex flex-col gap-2 items-center">
-        <span>Focus Time</span>
-        <div class="flex items-center gap-1 bg-white px-2 py-1 rounded-xl shadow-sm border border-rose-100">
-            <input type="number" id="focus-min" value="25" min="0" max="99" class="w-10 text-center text-rose-600 outline-none font-bold">
-            <span class="text-rose-300">:</span>
-            <input type="number" id="focus-sec" value="00" min="0" max="59" class="w-10 text-center text-rose-600 outline-none font-bold">
-        </div>
-    </div>
-    <div class="flex flex-col gap-2 items-center">
-        <span>Break Time</span>
-        <div class="flex items-center gap-1 bg-white px-2 py-1 rounded-xl shadow-sm border border-emerald-100">
-            <input type="number" id="break-min" value="5" min="0" max="99" class="w-10 text-center text-emerald-600 outline-none font-bold">
-            <span class="text-emerald-300">:</span>
-            <input type="number" id="break-sec" value="00" min="0" max="59" class="w-10 text-center text-emerald-600 outline-none font-bold">
-        </div>
-    </div>
-</div>
+                <div class="mb-8 flex justify-center gap-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    <div class="flex flex-col gap-2 items-center">
+                        <span>Focus</span>
+                        <div class="flex items-center gap-1 bg-white px-2 py-1 rounded-xl shadow-sm border border-rose-100">
+                            <input type="number" id="focus-min" value="25" class="w-8 text-center text-rose-600 outline-none font-bold">
+                            <span class="text-rose-300">:</span>
+                            <input type="number" id="focus-sec" value="00" class="w-8 text-center text-rose-600 outline-none font-bold">
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2 items-center">
+                        <span>Break</span>
+                        <div class="flex items-center gap-1 bg-white px-2 py-1 rounded-xl shadow-sm border border-emerald-100">
+                            <input type="number" id="break-min" value="5" class="w-8 text-center text-emerald-600 outline-none font-bold">
+                            <span class="text-emerald-300">:</span>
+                            <input type="number" id="break-sec" value="00" class="w-8 text-center text-emerald-600 outline-none font-bold">
+                        </div>
+                    </div>
+                </div>
 
                 <div id="timer" class="text-[7rem] font-black text-gray-800 leading-none mb-8 tracking-tighter">25:00</div>
 
@@ -80,15 +118,15 @@
                     <button id="skip-btn" class="hidden w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all text-xl">⏭</button>
                 </div>
 
-                <button onclick="switchPage('stats')" class="mt-auto text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-rose-500 transition-colors">
+                <button onclick="document.getElementById('main-container').classList.add('stats-active')" class="mt-auto text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-rose-500 transition-colors">
                     상세 통계 분석 ➔
                 </button>
             </div>
 
-            <div id="page-stats" class="page flex flex-col">
+            <div id="page-stats" class="page">
                 <h2 class="text-xl font-black text-gray-800 mb-4 flex justify-between items-center">
                     2026 Analysis
-                    <button onclick="switchPage('timer')" class="text-xs font-bold text-rose-500 uppercase p-2">✕ Close</button>
+                    <button onclick="document.getElementById('main-container').classList.remove('stats-active')" class="text-xs font-bold text-rose-500 uppercase p-2">✕ Close</button>
                 </h2>
                 
                 <div class="bg-white/50 rounded-2xl p-3 mb-4 border border-white/20 shadow-sm">
@@ -103,7 +141,7 @@
                     </div>
                 </div>
 
-                <div id="stats-list" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+                <div id="stats-list" class="flex-1 space-y-2 pr-1"></div>
 
                 <div class="mt-4 p-4 bg-white/50 rounded-2xl border border-white/10">
                     <div class="text-[10px] font-bold text-gray-400 uppercase mb-1">Total Focus</div>
