@@ -33,7 +33,8 @@ function updateDisplay() {
     }
 }
 
-function switchPage(to) {
+// 전역 스코프에 switchPage 함수 배치 (HTML에서 접근 가능하도록)
+window.switchPage = function(to) {
     const pTimer = document.getElementById('page-timer');
     const pStats = document.getElementById('page-stats');
     if (to === 'stats') {
@@ -44,7 +45,7 @@ function switchPage(to) {
         pTimer.style.transform = 'translateX(0)';
         pStats.style.transform = 'translateX(100%)';
     }
-}
+};
 
 function renderStats() {
     statsList.innerHTML = '';
@@ -109,3 +110,13 @@ startBtn.addEventListener('click', () => {
 });
 
 resetBtn.addEventListener('click', () => {
+    if (confirm("타이머를 초기화할까요?")) {
+        clearInterval(timerId);
+        timerId = null;
+        timeLeft = (isFocusMode ? focusInput.value : breakInput.value) * 60;
+        startBtn.innerText = '▶';
+        updateDisplay();
+    }
+});
+
+skipBtn.addEventListener('click', ()
