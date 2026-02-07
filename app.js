@@ -1,82 +1,94 @@
-// 1. 요소 불러오기 및 초기 변수 설정
-const focusInput = document.getElementById('focus-input');
-const breakInput = document.getElementById('break-input');
-const taskTag = document.getElementById('task-tag');
+// 요소 선택
 const timerDisplay = document.getElementById('timer');
 const startBtn = document.getElementById('start-btn');
 const resetBtn = document.getElementById('reset-btn');
 const bodyBg = document.getElementById('body-bg');
-const stackContainer = document.getElementById('stack-container');
+const taskTag = document.getElementById('task-tag');
 const totalTimeDisplay = document.getElementById('total-time');
+const statsList = document.getElementById('stats-list');
 const yearBar = document.getElementById('year-bar');
 const yearPercentText = document.getElementById('year-percent');
 
-// 알람 소리 설정
-const alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-alarmSound.load();
-
-let timeLeft = focusInput.value * 60;
+// 상태 및 데이터
+let timeLeft = 25 * 60;
 let timerId = null;
 let isFocusMode = true;
+let stats = JSON.parse(localStorage.getItem('pomoStats_2026')) || { totalMinutes: 0, tagData: {} };
 
-// 로컬 스토리지 데이터 불러오기
-let stats = JSON.parse(localStorage.getItem('pomoStats')) || { totalMinutes: 0, sessions: 0 };
+// 페이지 전환 함수
+function switchPage(to) {
+    const pTimer = document.getElementById('page-timer');
+    const pStats = document.getElementById('page-stats');
+    if (to === 'stats') {
+        pTimer.style.transform = 'translateX(-100%)';
+        pStats.style.transform = 'translateX(0)';
+        renderStats();
+    } else {
+        pTimer.style.transform = 'translateX(0)';
+        pStats.style.transform = 'translateX(100%)';
+    }
+}
 
-// 2. UI 업데이트 함수들
+// 통계 렌더링 함수
+function renderStats() {
+    statsList.innerHTML = '';
+    const tags = Object.keys(stats.tagData);
+    
+    if (tags.length === 0) {
+        statsList.innerHTML = '<div class="text-center text-gray-400 mt-10 text-sm italic">아직 기록된 활동이 없어요. 🍅</div>';
+        return;
+    }
+
+    tags.forEach(tag => {
+        const data = stats.tagData[tag];
+        const item = document.createElement('div');
+        item.className = 'bg-white/60 p-4 rounded-2xl shadow-sm border border-white/40 flex justify-between items-center transition-all hover:bg-white/80';
+        item.innerHTML = `
+            <div>
+                <div class="text-xs font-bold text-gray-400 mb-1">#${tag}</div>
+                <div class="text-lg font-black text-gray-800">${'🍅'.repeat(data.sessions)}</div>
+            </div>
+            <div class="text-right">
+                <div class="text-sm font-black text-rose-500">${data.minutes} min</div>
+            </div>
+        `;
+        statsList.appendChild(item);
+    });
+    totalTimeDisplay.innerText = stats.totalMinutes;
+}
+
+// 데이터 저장
+function saveStats() {
+    const currentTag = taskTag.value.trim() || "기타";
+    const minutes = 25; // 기본 집중 시간
+
+    stats.totalMinutes += minutes;
+    
+    if (!stats.tagData[currentTag]) {
+        stats.tagData[currentTag] = { minutes: 0, sessions: 0 };
+    }
+    stats.tagData[currentTag].minutes += minutes;
+    stats.tagData[currentTag].sessions += 1;
+
+    localStorage.setItem('pomoStats_2026', JSON.stringify(stats));
+}
+
+// 기존 타이머 로직 통합
 function updateDisplay() {
     const mins = Math.floor(timeLeft / 60);
     const secs = timeLeft % 60;
-    const timeString = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    timerDisplay.innerText = timeString;
-    document.title = `${timeString} - ${isFocusMode ? '집중' : '휴식'}`;
-}
-
-function updateStatsUI() {
-    totalTimeDisplay.innerText = stats.totalMinutes;
-    stackContainer.innerHTML = '🍅'.repeat(stats.sessions);
+    timerDisplay.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 function updateYearProgress() {
     const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 1);
-    const end = new Date(now.getFullYear() + 1, 0, 1);
+    const start = new Date(2026, 0, 1);
+    const end = new Date(2027, 0, 1);
     const progress = (now - start) / (end - start) * 100;
-    
-    if (yearBar) yearBar.style.width = progress + '%';
-    if (yearPercentText) yearPercentText.innerText = progress.toFixed(4) + '%';
+    yearBar.style.width = progress + '%';
+    yearPercentText.innerText = progress.toFixed(4) + '%';
 }
 
-// 3. 핵심 로직 함수들
-function saveStats(minutes) {
-    stats.totalMinutes += parseInt(minutes);
-    stats.sessions += 1;
-    localStorage.setItem('pomoStats', JSON.stringify(stats));
-    updateStatsUI();
-}
-
-function toggleMode() {
-    // 알림 (진동 및 소리)
-    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-    alarmSound.play().catch(e => console.log("소리 재생 권한 필요"));
-
-    // 집중 모드 완료 시 통계 저장
-    if (isFocusMode) {
-        saveStats(focusInput.value);
-    }
-
-    // 모드 전환
-    isFocusMode = !isFocusMode;
-    timeLeft = (isFocusMode ? focusInput.value : breakInput.value) * 60;
-    
-    // 배경색 전환
-    bodyBg.className = isFocusMode 
-        ? 'bg-rose-50 min-h-screen flex items-center justify-center p-4 transition-colors duration-500' 
-        : 'bg-emerald-50 min-h-screen flex items-center justify-center p-4 transition-colors duration-500';
-    
-    updateDisplay();
-}
-
-// 4. 이벤트 리스너
 startBtn.addEventListener('click', () => {
     if (timerId) {
         clearInterval(timerId);
@@ -91,33 +103,19 @@ startBtn.addEventListener('click', () => {
                 clearInterval(timerId);
                 timerId = null;
                 startBtn.innerText = '▶';
-                const message = isFocusMode ? `${taskTag.value || '작업'} 완료! 휴식 시작!` : "다시 집중해볼까요?";
-                toggleMode();
-                setTimeout(() => alert(message), 100);
+                if (isFocusMode) saveStats();
+                isFocusMode = !isFocusMode;
+                timeLeft = isFocusMode ? 25 * 60 : 5 * 60;
+                bodyBg.style.backgroundColor = isFocusMode ? '#fff1f2' : '#ecfdf5';
+                updateDisplay();
+                alert(isFocusMode ? "휴식 끝! 다시 집중해요." : "완료! 🍅 하나를 수확했습니다.");
             }
         }, 1000);
     }
 });
 
-resetBtn.addEventListener('click', () => {
-    clearInterval(timerId);
-    timerId = null;
-    timeLeft = (isFocusMode ? focusInput.value : breakInput.value) * 60;
-    startBtn.innerText = '▶';
-    updateDisplay();
-});
-
-[focusInput, breakInput].forEach(input => {
-    input.addEventListener('change', () => {
-        if (!timerId) {
-            timeLeft = (isFocusMode ? focusInput.value : breakInput.value) * 60;
-            updateDisplay();
-        }
-    });
-});
-
-// 5. 초기 실행
+// 초기화
 setInterval(updateYearProgress, 1000);
 updateYearProgress();
-updateStatsUI();
 updateDisplay();
+renderStats();
