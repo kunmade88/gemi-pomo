@@ -16,9 +16,18 @@ const alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_s
 let timeLeft = focusInput.value * 60;
 let timerId = null;
 let isFocusMode = true;
-let stats = JSON.parse(localStorage.getItem('pomoStats_2026')) || { totalMinutes: 0, tagData: {} };
 
-// 페이지 전환 함수
+// 월별 데이터까지 지원하는 새로운 데이터 구조
+let stats = JSON.parse(localStorage.getItem('pomoStats_2026_Analysis')) || { 
+    totalMinutes: 0, 
+    tagData: {}, 
+    monthlyData: new Array(12).fill(0) 
+};
+
+// 차트 변수
+let monthlyChart = null;
+let tagChart = null;
+
 window.switchPage = function(to) {
     const pTimer = document.getElementById('page-timer');
     const pStats = document.getElementById('page-stats');
@@ -26,54 +35,98 @@ window.switchPage = function(to) {
         pTimer.style.transform = 'translateX(-100%)';
         pStats.style.transform = 'translateX(0)';
         renderStats();
+        renderCharts();
     } else {
         pTimer.style.transform = 'translateX(0)';
         pStats.style.transform = 'translateX(100%)';
     }
 }
 
-// 통계 렌더링 함수
 function renderStats() {
     statsList.innerHTML = '';
     const tags = Object.keys(stats.tagData);
     if (tags.length === 0) {
-        statsList.innerHTML = '<div class="text-center text-gray-400 mt-10 italic">기록된 활동이 없어요 🍅</div>';
+        statsList.innerHTML = '<div class="text-center text-gray-400 mt-10 italic text-sm">기록된 활동이 없어요 🍅</div>';
     } else {
         tags.forEach(tag => {
             const data = stats.tagData[tag];
             const div = document.createElement('div');
-            div.className = 'bg-white/60 p-4 rounded-2xl flex justify-between items-center shadow-sm mb-2';
-            div.innerHTML = `<div><p class="text-[10px] text-gray-400 font-bold">#${tag}</p><p class="text-lg">${'🍅'.repeat(data.sessions)}</p></div><p class="font-black text-rose-500">${data.minutes}m</p>`;
+            div.className = 'bg-white/60 p-3 rounded-xl flex justify-between items-center shadow-sm text-sm';
+            div.innerHTML = `<div><p class="text-[9px] text-gray-400 font-bold">#${tag}</p><p class="text-base">${'🍅'.repeat(Math.min(data.sessions, 5))}${data.sessions > 5 ? '..' : ''}</p></div><p class="font-black text-rose-500">${data.minutes}m</p>`;
             statsList.appendChild(div);
         });
     }
     totalTimeDisplay.innerText = stats.totalMinutes;
 }
 
-// 화면 업데이트 함수
+function renderCharts() {
+    const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
+    const ctxTag = document.getElementById('tagChart').getContext('2d');
+
+    if (monthlyChart) monthlyChart.destroy();
+    if (tagChart) tagChart.destroy();
+
+    monthlyChart = new Chart(ctxMonthly, {
+        type: 'bar',
+        data: {
+            labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
+            datasets: [{
+                label: '분(min)',
+                data: stats.monthlyData,
+                backgroundColor: '#fb7185',
+                borderRadius: 4
+            }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } }
+    });
+
+    const tagLabels = Object.keys(stats.tagData);
+    const tagValues = tagLabels.map(tag => stats.tagData[tag].minutes);
+    const colors = ['#fb7185', '#34d399', '#60a5fa', '#fbbf24', '#a78bfa', '#f472b6'];
+
+    tagChart = new Chart(ctxTag, {
+        type: 'doughnut',
+        data: {
+            labels: tagLabels,
+            datasets: [{
+                data: tagValues,
+                backgroundColor: colors,
+                borderWidth: 0
+            }]
+        },
+        options: { plugins: { legend: { display: false } }, cutout: '75%' }
+    });
+
+    // 범례 퍼센트 계산
+    const legend = document.getElementById('tag-legend');
+    const total = stats.totalMinutes || 1;
+    legend.innerHTML = tagLabels.map((label, i) => {
+        const percent = ((tagValues[i] / total) * 100).toFixed(1);
+        return `<div class="flex justify-between items-center"><span class="truncate mr-2"><i style="color:${colors[i%colors.length]}">●</i> ${label}</span><b>${percent}%</b></div>`;
+    }).join('');
+}
+
 function updateDisplay() {
     const m = Math.floor(timeLeft / 60);
     const s = timeLeft % 60;
     timerDisplay.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    
-    // 휴식 모드일 때만 건너뛰기 버튼 표시
-    if (!isFocusMode) {
-        skipBtn.classList.remove('hidden');
-    } else {
-        skipBtn.classList.add('hidden');
-    }
+    if (!isFocusMode) skipBtn.classList.remove('hidden');
+    else skipBtn.classList.add('hidden');
 }
 
-// 모드 전환 및 데이터 저장 로직 통합
 function toggleMode() {
     if (isFocusMode) {
         const tag = taskTag.value.trim() || "기본";
         const sessionMins = parseInt(focusInput.value) || 25;
+        const currentMonth = new Date().getMonth();
+
         stats.totalMinutes += sessionMins;
         if (!stats.tagData[tag]) stats.tagData[tag] = { minutes: 0, sessions: 0 };
         stats.tagData[tag].minutes += sessionMins;
         stats.tagData[tag].sessions += 1;
-        localStorage.setItem('pomoStats_2026', JSON.stringify(stats));
+        stats.monthlyData[currentMonth] += sessionMins;
+
+        localStorage.setItem('pomoStats_2026_Analysis', JSON.stringify(stats));
         alarmSound.play().catch(() => {});
         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
     }
@@ -84,7 +137,6 @@ function toggleMode() {
     updateDisplay();
 }
 
-// 시작/일시정지 버튼
 startBtn.addEventListener('click', () => {
     if (timerId) {
         clearInterval(timerId);
@@ -99,7 +151,7 @@ startBtn.addEventListener('click', () => {
                 clearInterval(timerId);
                 timerId = null;
                 startBtn.innerText = '▶';
-                const msg = isFocusMode ? "집중 끝! 휴식 시작." : "휴식 끝! 다시 집중해요.";
+                const msg = isFocusMode ? "완료! 휴식할까요?" : "휴식 끝! 다시 고고!";
                 toggleMode();
                 setTimeout(() => alert(msg), 100);
             }
@@ -107,9 +159,8 @@ startBtn.addEventListener('click', () => {
     }
 });
 
-// 초기화 버튼
 resetBtn.addEventListener('click', () => {
-    if(confirm("초기화할까요?")) {
+    if(confirm("리셋하시겠어요?")) {
         clearInterval(timerId);
         timerId = null;
         isFocusMode = true;
@@ -120,9 +171,8 @@ resetBtn.addEventListener('click', () => {
     }
 });
 
-// 건너뛰기 버튼
 skipBtn.addEventListener('click', () => {
-    if (confirm("휴식을 건너뛰고 바로 집중 모드로 갈까요?")) {
+    if (confirm("휴식을 건너뛸까요?")) {
         clearInterval(timerId);
         timerId = null;
         isFocusMode = true;
@@ -133,7 +183,6 @@ skipBtn.addEventListener('click', () => {
     }
 });
 
-// 설정값 변경 시 즉시 반영
 [focusInput, breakInput].forEach(input => {
     input.addEventListener('change', () => {
         if (!timerId) {
@@ -143,12 +192,9 @@ skipBtn.addEventListener('click', () => {
     });
 });
 
-// 2026년 진행도 업데이트
 function updateYear() {
     const now = new Date();
-    const start = new Date(2026, 0, 1);
-    const end = new Date(2027, 0, 1);
-    const progress = (now - start) / (end - start) * 100;
+    const progress = (now - new Date(2026,0,1)) / (new Date(2027,0,1) - new Date(2026,0,1)) * 100;
     yearBar.style.width = progress + '%';
     yearPercentText.innerText = progress.toFixed(4) + '%';
 }
