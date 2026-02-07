@@ -9,33 +9,40 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 기본 설정 */
+        /* 1. 기본 배경 및 중앙 정렬 설정 */
+        html { height: -webkit-fill-available; }
+        
         body { 
             transition: background-color 0.5s ease; 
             margin: 0;
+            padding: 0;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            align-items: center; 
+            justify-content: center; 
             min-height: 100vh;
+            min-height: -webkit-fill-available;
             user-select: none;
             -webkit-app-region: drag;
-            overflow: hidden; /* 전체 화면 스크롤 방지 */
+            overflow: hidden; 
         }
 
-        /* 위젯 컨테이너: 가로모드 대응 핵심 */
+        /* 2. 위젯 컨테이너 (중앙 배치 및 가로모드 대응) */
         .page-container { 
             position: relative; 
-            width: 100%; 
+            width: 95%; 
             max-width: 380px; 
-            height: 90vh; /* 화면 높이의 90% */
+            height: 85vh; 
             max-height: 650px; 
-            overflow-y: auto; /* 내부 스크롤 허용 */
+            margin: auto;
+            overflow-y: auto; 
             background: rgba(255, 255, 255, 0.4);
             border-radius: 3.5rem;
             backdrop-filter: blur(12px);
-            -webkit-overflow-scrolling: touch; /* 모바일 부드러운 스크롤 */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            -webkit-overflow-scrolling: touch;
         }
 
+        /* 3. 페이지 전환 및 내부 레이아웃 */
         .page { 
             position: absolute; inset: 0; width: 100%; height: auto; min-height: 100%;
             transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
@@ -47,26 +54,24 @@
         #page-timer { transform: translateX(0); position: relative; }
         #page-stats { transform: translateX(100%); display: none; }
         
-        /* 통계 페이지 활성화 시 스타일 */
         .stats-active #page-timer { transform: translateX(-100%); position: absolute; }
         .stats-active #page-stats { transform: translateX(0); display: flex; position: relative; }
 
-        /* 가로 모드 최적화 */
+        /* 4. 가로 모드 (높이가 낮을 때) 최적화 */
         @media (max-height: 500px) {
-            .page-container { height: 95vh; border-radius: 1.5rem; }
-            #timer { font-size: 5rem !important; margin-bottom: 1rem; }
-            .page { padding: 1rem; }
+            body { padding: 10px 0; }
+            .page-container { height: 92vh; border-radius: 2rem; }
+            #timer { font-size: 4.5rem !important; margin-bottom: 0.5rem; }
+            .page { padding: 1.5rem; }
             #task-tag { margin-bottom: 1rem; padding: 0.5rem; }
         }
 
-        /* 요소별 드래그 방지 */
+        /* 5. 기타 UI 디테일 */
         button, input, canvas, #stats-list, .stat-item {
             -webkit-app-region: no-drag !important;
         }
 
-        /* 스크롤바 숨기기 (선택 사항) */
         .page-container::-webkit-scrollbar { width: 0px; background: transparent; }
-        
         input[type="number"]::-webkit-inner-spin-button { display: none; }
         .stat-item .delete-btn { opacity: 0; transition: opacity 0.2s; }
         .stat-item:hover .delete-btn { opacity: 1; }
