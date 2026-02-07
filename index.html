@@ -16,6 +16,9 @@
         #page-timer { transform: translateX(0); }
         #page-stats { transform: translateX(100%); }
         input[type="number"]::-webkit-inner-spin-button { display: none; }
+        /* 스크롤바 디자인 */
+        #stats-list::-webkit-scrollbar { width: 4px; }
+        #stats-list::-webkit-scrollbar-thumb { background: #fb7185; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-rose-50 min-h-screen flex items-center justify-center font-sans p-4" id="body-bg">
@@ -50,13 +53,11 @@
 
                 <div id="timer" class="text-[7rem] font-black text-gray-800 leading-none mb-8 tracking-tighter">25:00</div>
 
-               <div class="flex justify-center items-center gap-6 mb-12">
-    <button id="reset-btn" class="w-16 h-16 bg-white text-gray-400 rounded-full flex items-center justify-center shadow-md hover:text-gray-600 active:scale-95 transition-all text-xl">↺</button>
-    
-    <button id="start-btn" class="w-24 h-24 bg-gray-800 text-white rounded-full flex items-center justify-center shadow-xl text-3xl active:scale-95 transition-all">▶</button>
-    
-    <button id="skip-btn" class="hidden w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shadow-md hover:bg-emerald-200 active:scale-95 transition-all text-xl" title="건너뛰기">⏭</button>
-</div>
+                <div class="flex justify-center items-center gap-6 mb-12">
+                    <button id="reset-btn" class="w-16 h-16 bg-white text-gray-400 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all text-xl">↺</button>
+                    <button id="start-btn" class="w-24 h-24 bg-gray-800 text-white rounded-full flex items-center justify-center shadow-xl text-3xl active:scale-95 transition-all">▶</button>
+                    <button id="skip-btn" class="hidden w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all text-xl">⏭</button>
+                </div>
 
                 <button onclick="switchPage('stats')" class="mt-auto text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-rose-500 transition-colors">
                     상세 통계 보기 ➔
@@ -68,9 +69,7 @@
                     Daily Report
                     <button onclick="switchPage('timer')" class="text-xs font-bold text-rose-500 uppercase p-2">✕ Close</button>
                 </h2>
-                
                 <div id="stats-list" class="flex-1 overflow-y-auto space-y-3 pr-1"></div>
-
                 <div class="mt-6 p-4 bg-white/50 rounded-2xl border border-white/10">
                     <div class="text-[10px] font-bold text-gray-400 uppercase mb-1">Total Focus Time</div>
                     <div class="text-2xl font-black text-rose-600"><span id="total-time">0</span> min</div>
