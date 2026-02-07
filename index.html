@@ -50,10 +50,13 @@
 
                 <div id="timer" class="text-[7rem] font-black text-gray-800 leading-none mb-8 tracking-tighter">25:00</div>
 
-                <div class="flex justify-center gap-6 mb-10">
-                    <button id="start-btn" class="w-20 h-20 bg-gray-800 text-white rounded-full flex items-center justify-center shadow-xl text-2xl active:scale-95 transition-all">▶</button>
-                    <button id="reset-btn" class="w-20 h-20 bg-white text-gray-400 rounded-full flex items-center justify-center shadow-md text-2xl active:scale-95 transition-all">↺</button>
-                </div>
+               <div class="flex justify-center items-center gap-6 mb-12">
+    <button id="reset-btn" class="w-16 h-16 bg-white text-gray-400 rounded-full flex items-center justify-center shadow-md hover:text-gray-600 active:scale-95 transition-all text-xl">↺</button>
+    
+    <button id="start-btn" class="w-24 h-24 bg-gray-800 text-white rounded-full flex items-center justify-center shadow-xl text-3xl active:scale-95 transition-all">▶</button>
+    
+    <button id="skip-btn" class="hidden w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shadow-md hover:bg-emerald-200 active:scale-95 transition-all text-xl" title="건너뛰기">⏭</button>
+</div>
 
                 <button onclick="switchPage('stats')" class="mt-auto text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-rose-500 transition-colors">
                     상세 통계 보기 ➔
