@@ -7,23 +7,35 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { transition: background-color 0.5s ease; }
+        input[type="number"]::-webkit-inner-spin-button { display: none; }
     </style>
 </head>
 <body class="bg-rose-50 min-h-screen flex items-center justify-center font-sans" id="body-bg">
-    <div class="text-center">
-        <div class="mb-8 flex justify-center gap-4">
-            <span id="mode-text" class="px-6 py-2 bg-white rounded-full shadow-sm text-rose-600 font-bold">Focus</span>
+    <div class="text-center w-full max-w-md px-4">
+        <div class="mb-10 flex justify-center gap-8 text-sm font-medium text-gray-500">
+            <div class="flex flex-col gap-1">
+                <span>Focus (min)</span>
+                <input type="number" id="focus-input" value="25" class="w-16 bg-white/50 border-none rounded-lg py-1 text-center text-rose-600 focus:ring-2 focus:ring-rose-300 outline-none">
+            </div>
+            <div class="flex flex-col gap-1">
+                <span>Break (min)</span>
+                <input type="number" id="break-input" value="5" class="w-16 bg-white/50 border-none rounded-lg py-1 text-center text-emerald-600 focus:ring-2 focus:ring-emerald-300 outline-none">
+            </div>
         </div>
 
-        <div id="timer" class="text-[10rem] font-black text-gray-800 leading-none mb-12 tracking-tighter">
+        <div class="mb-4">
+            <span id="mode-text" class="px-6 py-2 bg-white rounded-full shadow-sm text-rose-600 font-bold transition-all">Focus</span>
+        </div>
+
+        <div id="timer" class="text-[8rem] md:text-[10rem] font-black text-gray-800 leading-none mb-12 tracking-tighter">
             25:00
         </div>
 
         <div class="flex justify-center gap-6">
-            <button id="start-btn" class="w-20 h-20 bg-gray-800 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-transform">
+            <button id="start-btn" class="w-20 h-20 bg-gray-800 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all text-2xl">
                 ▶
             </button>
-            <button id="reset-btn" class="w-20 h-20 bg-white text-gray-400 rounded-full flex items-center justify-center shadow-md hover:text-gray-600 transition-all">
+            <button id="reset-btn" class="w-20 h-20 bg-white text-gray-400 rounded-full flex items-center justify-center shadow-md hover:text-gray-600 active:scale-95 transition-all">
                 ↺
             </button>
         </div>
