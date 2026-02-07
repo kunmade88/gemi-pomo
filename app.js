@@ -1,4 +1,4 @@
-// [보완 완료] 모든 코드를 하나의 스코프로 감싸 안전하게 실행합니다.
+// [최종 보완] 모든 코드를 하나의 스코프로 감싸 안전하게 실행합니다.
 document.addEventListener('DOMContentLoaded', () => {
     // 1. 요소 선택
     const focusMin = document.getElementById('focus-min');
@@ -15,10 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const statsList = document.getElementById('stats-list');
     const yearBar = document.getElementById('year-bar');
     const yearPercentText = document.getElementById('year-percent');
+    const mainContainer = document.getElementById('main-container'); // 컨테이너 추가
 
     const alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
 
-    // 2. 상태 및 데이터 초기화
+    // 2. 상태 및 데이터 초기화 (키 이름을 통일합니다)
     let timerId = null;
     let isFocusMode = true;
     let stats = JSON.parse(localStorage.getItem('pomoStats_2026_Final')) || { 
@@ -48,20 +49,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function toggleMode() {
         if (isFocusMode) {
             const tag = taskTag.value.trim() || "기본";
-            // [수정] 입력창 값이 아닌, 실제 설정되었던 총 시간을 기준으로 기록합니다.
             const totalSecs = getSetTime(); 
-            const sessionMins = parseFloat((totalSecs / 60).toFixed(2)); 
+            const sessionMins = Math.round(totalSecs / 60); // 소수점 대신 반올림하여 정수로 기록
 
-            stats.totalMinutes = parseFloat((stats.totalMinutes + sessionMins).toFixed(2));
+            stats.totalMinutes += sessionMins;
             if (!stats.tagData[tag]) stats.tagData[tag] = { minutes: 0, sessions: 0 };
-            stats.tagData[tag].minutes = parseFloat((stats.tagData[tag].minutes + sessionMins).toFixed(2));
+            stats.tagData[tag].minutes += sessionMins;
             stats.tagData[tag].sessions += 1;
             
             const currentMonth = new Date().getMonth();
-            stats.monthlyData[currentMonth] = parseFloat((stats.monthlyData[currentMonth] + sessionMins).toFixed(2));
+            stats.monthlyData[currentMonth] += sessionMins;
 
             saveData();
             alarmSound.play().catch(() => {});
+            alert(`축하합니다! #${tag} 세션을 완료했습니다.`);
         }
 
         isFocusMode = !isFocusMode;
@@ -70,30 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateDisplay();
     }
 
-    // 4. 수정 및 삭제 로직 (데이터 관리)
-    window.editTagName = function(oldTag) {
-        const newTag = prompt(`'${oldTag}' 태그의 이름을 무엇으로 바꿀까요?`, oldTag);
-        if (newTag && newTag.trim() !== "" && newTag !== oldTag) {
-            const trimmedTag = newTag.trim();
-            if (stats.tagData[trimmedTag]) {
-                stats.tagData[trimmedTag].minutes += stats.tagData[oldTag].minutes;
-                stats.tagData[trimmedTag].sessions += stats.tagData[oldTag].sessions;
-            } else {
-                stats.tagData[trimmedTag] = stats.tagData[oldTag];
-            }
-            delete stats.tagData[oldTag];
-            saveAndRefresh();
-        }
-    }
-
-    window.deleteStat = function(tag) {
-        if (confirm(`'${tag}' 기록을 영구 삭제할까요?\n총 시간에서도 차감됩니다.`)) {
-            stats.totalMinutes = parseFloat((stats.totalMinutes - stats.tagData[tag].minutes).toFixed(2));
-            delete stats.tagData[tag];
-            saveAndRefresh();
-        }
-    }
-
+    // 4. 데이터 저장 및 새로고침
     function saveData() {
         localStorage.setItem('pomoStats_2026_Final', JSON.stringify(stats));
     }
@@ -104,21 +82,18 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCharts();
     }
 
-    // 5. 페이지 전환 및 렌더링
+    // 5. 페이지 전환 (HTML의 onclick과 연결)
     window.switchPage = function(to) {
-        const pTimer = document.getElementById('page-timer');
-        const pStats = document.getElementById('page-stats');
         if (to === 'stats') {
-            pTimer.style.transform = 'translateX(-100%)';
-            pStats.style.transform = 'translateX(0)';
+            mainContainer.classList.add('stats-active');
             renderStats();
-            renderCharts();
+            setTimeout(renderCharts, 100); // 애니메이션 후 차트 렌더링
         } else {
-            pTimer.style.transform = 'translateX(0)';
-            pStats.style.transform = 'translateX(100%)';
+            mainContainer.classList.remove('stats-active');
         }
     }
 
+    // 6. 통계 리스트 렌더링
     function renderStats() {
         statsList.innerHTML = '';
         const tags = Object.keys(stats.tagData);
@@ -149,12 +124,12 @@ document.addEventListener('DOMContentLoaded', () => {
         totalTimeDisplay.innerText = stats.totalMinutes;
     }
 
-    // 6. 차트 생성
+    // 7. 차트 생성
     let monthlyChart, tagChart;
     function renderCharts() {
         const canvasMonthly = document.getElementById('monthlyChart');
         const canvasTag = document.getElementById('tagChart');
-        if(!canvasMonthly || !canvasTag) return; // 요소가 없으면 실행 중단
+        if(!canvasMonthly || !canvasTag) return;
 
         const ctxMonthly = canvasMonthly.getContext('2d');
         const ctxTag = canvasTag.getContext('2d');
@@ -191,7 +166,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     }
 
-    // 7. 이벤트 리스너 및 초기화
+    // 8. 데이터 관리 (수정/삭제)
+    window.editTagName = function(oldTag) {
+        const newTag = prompt(`'${oldTag}' 태그의 이름을 무엇으로 바꿀까요?`, oldTag);
+        if (newTag && newTag.trim() !== "" && newTag !== oldTag) {
+            const trimmedTag = newTag.trim();
+            if (stats.tagData[trimmedTag]) {
+                stats.tagData[trimmedTag].minutes += stats.tagData[oldTag].minutes;
+                stats.tagData[trimmedTag].sessions += stats.tagData[oldTag].sessions;
+            } else {
+                stats.tagData[trimmedTag] = stats.tagData[oldTag];
+            }
+            delete stats.tagData[oldTag];
+            saveAndRefresh();
+        }
+    }
+
+    window.deleteStat = function(tag) {
+        if (confirm(`'${tag}' 기록을 영구 삭제할까요?\n총 시간에서도 차감됩니다.`)) {
+            stats.totalMinutes -= stats.tagData[tag].minutes;
+            delete stats.tagData[tag];
+            saveAndRefresh();
+        }
+    }
+
+    // 9. 이벤트 리스너
     startBtn.addEventListener('click', () => {
         if (timerId) {
             clearInterval(timerId);
@@ -214,8 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     resetBtn.addEventListener('click', () => {
         if(confirm("초기화할까요?")) {
-            clearInterval(timerId);
-            timerId = null;
+            if(timerId) { clearInterval(timerId); timerId = null; }
             timeLeft = getSetTime();
             startBtn.innerText = '▶';
             updateDisplay();
@@ -224,8 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     skipBtn.addEventListener('click', () => {
         if (confirm("휴식을 건너뛸까요?")) {
-            clearInterval(timerId);
-            timerId = null;
+            if(timerId) { clearInterval(timerId); timerId = null; }
             isFocusMode = true;
             timeLeft = getSetTime();
             bodyBg.style.backgroundColor = '#fff1f2';
@@ -246,7 +243,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateYear() {
         const now = new Date();
-        const progress = (now - new Date(2026,0,1)) / (new Date(2027,0,1) - new Date(2026,0,1)) * 100;
+        const start = new Date(2026, 0, 1);
+        const end = new Date(2027, 0, 1);
+        const progress = (now - start) / (end - start) * 100;
         yearBar.style.width = progress + '%';
         yearPercentText.innerText = progress.toFixed(7) + '%';
     }
@@ -254,4 +253,5 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateYear, 50);
     updateYear();
     updateDisplay();
+    renderStats(); // 시작할 때 한 번 그리기
 });
