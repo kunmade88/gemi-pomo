@@ -192,4 +192,14 @@ function renderStats() {
     tags.forEach(tag => {
         const data = stats.tagData[tag];
         const div = document.createElement('div');
-        div.className = 'bg-
+        div.className = 'bg-white/60 p-3 rounded-xl flex justify-between items-center shadow-sm mb-2 text-sm';
+        div.innerHTML = `<div><p class="text-[9px] text-gray-400 font-bold">#${tag}</p><p>${'🍅'.repeat(Math.min(data.sessions, 5))}</p></div><p class="font-black text-rose-500">${data.minutes}m</p>`;
+        statsList.appendChild(div);
+    });
+    totalTimeDisplay.innerText = stats.totalMinutes;
+}
+
+// 초기화
+setInterval(updateYear, 50);
+updateYear();
+updateDisplay();
